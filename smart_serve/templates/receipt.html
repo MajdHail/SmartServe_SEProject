@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}– Receipt{% endblock %}
+{% block content %}
+<div class="bill-wrap">
+  <div class="bill-card receipt">
+    <div class="receipt-stamp">✓ PAID</div>
+    <div class="bill-header">
+      <h3>🍽️ Smart Serve Restaurant</h3>
+      <p>Table {{ tid }} | Waiter: {{ order.waiter }}</p>
+      <p>Paid: {{ paid_at }}</p>
+    </div>
+    <hr>
+    <table class="items-table">
+      <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Subtotal</th></tr></thead>
+      <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.item_name }}</td>
+        <td>{{ item.qty }}</td>
+        <td>${{ "%.2f"|format(item.price) }}</td>
+        <td>${{ "%.2f"|format(item.price * item.qty) }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <hr>
+    <div class="bill-totals">
+      <div class="bill-row"><span>Subtotal</span><span>${{ "%.2f"|format(order.total) }}</span></div>
+      <div class="bill-row"><span>Tax (10%)</span><span>${{ "%.2f"|format(order.total * 0.1) }}</span></div>
+      <div class="bill-row grand"><span>Total</span><span>${{ "%.2f"|format(order.total * 1.1) }}</span></div>
+    </div>
+    <p class="thank-you">Thank you for dining with us!</p>
+    <div class="receipt-actions">
+      <button onclick="window.print()" class="btn-primary">🖨️ Print</button>
+      <a href="{{ url_for('floor_plan') }}" class="btn-back">← Floor Plan</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

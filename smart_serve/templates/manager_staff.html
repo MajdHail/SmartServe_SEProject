@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}– Staff Management{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Staff Management</h2>
+  <a href="{{ url_for('manager_dashboard') }}" class="btn-back">← Dashboard</a>
+</div>
+
+<div class="section-card">
+  <h3>Add New Account</h3>
+  <form method="POST" class="add-form">
+    <input type="hidden" name="action" value="add">
+    <input type="text"     name="username" placeholder="Username" required class="form-input">
+    <input type="password" name="password" placeholder="Password" required class="form-input">
+    <select name="role" class="form-input short">
+      <option value="waiter">Waiter</option>
+      <option value="chef">Chef</option>
+    </select>
+    <button type="submit" class="btn-primary">Add Account</button>
+  </form>
+</div>
+
+<div class="section-card">
+  <h3>Current Staff</h3>
+  <table class="items-table">
+    <thead><tr><th>Username</th><th>Role</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td><span class="role-badge {{ u.role }}">{{ u.role }}</span></td>
+      <td>
+        {% if u.username != 'manager' %}
+        <form method="POST" style="display:inline"
+              onsubmit="return confirm('Delete {{ u.username }}?')">
+          <input type="hidden" name="action"  value="delete">
+          <input type="hidden" name="user_id" value="{{ u.id }}">
+          <button type="submit" class="btn-danger tiny">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

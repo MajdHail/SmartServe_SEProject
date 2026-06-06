@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}– Orders Log{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Orders Log</h2>
+  <a href="{{ url_for('manager_dashboard') }}" class="btn-back">← Dashboard</a>
+</div>
+
+<form method="GET" class="filter-bar">
+  <label>Status:
+    <select name="status" onchange="this.form.submit()">
+      <option value="all"       {% if filter_status=='all'       %}selected{% endif %}>All</option>
+      <option value="pending"   {% if filter_status=='pending'   %}selected{% endif %}>Pending</option>
+      <option value="sent"      {% if filter_status=='sent'      %}selected{% endif %}>Sent</option>
+      <option value="preparing" {% if filter_status=='preparing' %}selected{% endif %}>Preparing</option>
+      <option value="ready"     {% if filter_status=='ready'     %}selected{% endif %}>Ready</option>
+      <option value="paid"      {% if filter_status=='paid'      %}selected{% endif %}>Paid</option>
+      <option value="cancelled" {% if filter_status=='cancelled' %}selected{% endif %}>Cancelled</option>
+    </select>
+  </label>
+  <label>From: <input type="date" name="date_from" value="{{ date_from }}"></label>
+  <label>To:   <input type="date" name="date_to"   value="{{ date_to }}"></label>
+  <button type="submit" class="btn-primary small">Filter</button>
+  <a href="{{ url_for('manager_orders') }}" class="btn-back small">Reset</a>
+</form>
+
+{% if enriched %}
+<div class="log-list">
+  {% for row in enriched %}
+  {% set o = row.order %}
+  <div class="log-card">
+    <div class="log-header">
+      <div class="log-title">
+        <strong>Order #{{ o.id }}</strong> — Table {{ o.table_id }}
+        <span class="badge {{ o.status }}">{{ o.status | upper }}</span>
+      </div>
+      <div class="log-meta">
+        Waiter: <strong>{{ o.waiter }}</strong> |
+        Created: {{ o.created_at }}
+        {% if o.paid_at %} | Paid: {{ o.paid_at }}{% endif %}
+      </div>
+    </div>
+    <div class="log-body">
+      <div class="log-items">
+        <strong>Items</strong>
+        {% if row.order_items %}
+        <table class="items-table compact">
+          <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Subtotal</th></tr></thead>
+          <tbody>
+          {% for item in row.order_items %}
+          <tr>
+            <td>{{ item.item_name }}</td>
+            <td>{{ item.qty }}</td>
+            <td>${{ "%.2f"|format(item.price) }}</td>
+            <td>${{ "%.2f"|format(item.price * item.qty) }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <div class="order-total small">
+          Sub: ${{ "%.2f"|format(o.total) }} | Tax: ${{ "%.2f"|format(o.total * 0.1) }} |
+          <strong>Total: ${{ "%.2f"|format(o.total * 1.1) }}</strong>
+        </div>
+        {% else %}
+          <span class="muted">No items</span>
+        {% endif %}
+      </div>
+      <div class="log-activity">
+        <strong>Activity Log</strong>
+        {% if row.logs %}
+        <ul class="activity-list">
+          {% for log in row.logs %}
+          <li>
+            <span class="log-time">{{ log.timestamp }}</span>
+            <span class="log-who">{{ log.performed_by }}</span>
+            <span class="log-action">{{ log.action }}</span>
+            {% if log.detail %}<span class="log-detail">— {{ log.detail }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <span class="muted">No log entries</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="empty-state"><p>No orders found.</p></div>
+{% endif %}
+{% endblock %}

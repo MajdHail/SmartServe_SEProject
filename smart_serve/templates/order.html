@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}– Table {{ tid }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Table {{ tid }} — Order Management</h2>
+  <a href="{{ url_for('floor_plan') }}" class="btn-back">← Floor Plan</a>
+</div>
+
+<div class="note-bar">
+  <form method="POST" action="{{ url_for('set_table_note', tid=tid) }}" class="note-form">
+    <input type="text" name="note" placeholder="Table note (e.g. allergy: nuts, birthday table)"
+           value="{{ table.note or '' }}" class="note-input">
+    <button type="submit" class="btn-primary small">Save Note</button>
+  </form>
+</div>
+
+{% if not order %}
+  <div class="empty-state">
+    <p>No active order for this table.</p>
+    <form method="POST">
+      <input type="hidden" name="action" value="new_order">
+      <button type="submit" class="btn-primary">Start New Order</button>
+    </form>
+  </div>
+{% else %}
+  <div class="order-wrap">
+    <div class="order-panel">
+      <h3>
+        Current Order
+        <span class="badge {{ order.status }}">{{ order.status | upper }}</span>
+        {% if kitchen_elapsed is not none %}
+          <span class="timer-badge {% if kitchen_elapsed >= 15 %}timer-red{% else %}timer-ok{% endif %}">
+            ⏱ {{ kitchen_elapsed }}m
+          </span>
+        {% endif %}
+      </h3>
+
+      {% if order.status in ('sent', 'preparing', 'ready') %}
+        <div class="alert info">
+          {% if order.status == 'sent' %}Order is waiting in the kitchen.
+          {% elif order.status == 'preparing' %}Chef is currently preparing this order.
+          {% elif order.status == 'ready' %}Order is ready — proceed to billing.
+          {% endif %}
+          {% if order.status in ('sent', 'preparing') %}
+            <form method="POST" style="display:inline;margin-left:10px"
+                  onsubmit="return confirm('Recall order from kitchen to edit it?')">
+              <input type="hidden" name="action" value="recall_order">
+              <button type="submit" class="btn-warning small">✏️ Recall & Edit</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if items %}
+      <table class="items-table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th><th></th></tr></thead>
+        <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.item_name }}</td>
+          <td>{{ item.qty }}</td>
+          <td>${{ "%.2f"|format(item.price) }}</td>
+          <td>${{ "%.2f"|format(item.price * item.qty) }}</td>
+          <td>
+            {% if order.status == 'pending' %}
+            <form method="POST" style="display:inline">
+              <input type="hidden" name="action" value="remove_item">
+              <input type="hidden" name="item_id" value="{{ item.id }}">
+              <input type="hidden" name="order_id" value="{{ order.id }}">
+              <button type="submit" class="btn-danger tiny">✕</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="order-total">Total: <strong>${{ "%.2f"|format(order.total) }}</strong></div>
+      {% else %}
+        <p class="muted">No items added yet.</p>
+      {% endif %}
+
+      {% if order.status == 'pending' %}
+      <div class="order-actions">
+        <form method="POST" style="display:inline">
+          <input type="hidden" name="action" value="send_to_kitchen">
+          <button type="submit" class="btn-primary" {% if not items %}disabled{% endif %}>
+            Send to Kitchen
+          </button>
+        </form>
+        <form method="POST" style="display:inline"
+              onsubmit="return confirm('Cancel this order?')">
+          <input type="hidden" name="action" value="cancel_order">
+          <button type="submit" class="btn-danger">Cancel Order</button>
+        </form>
+      </div>
+      {% elif order.status == 'ready' %}
+        <div class="order-actions">
+          <a href="{{ url_for('bill', tid=tid) }}" class="btn-success">Go to Billing →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if order.status == 'pending' %}
+    <div class="menu-panel">
+      <h3>Menu</h3>
+      <form method="POST">
+        <input type="hidden" name="action" value="add_item">
+        {% for category, menu_items in categories.items() %}
+        <div class="menu-category">
+          <div class="menu-cat-label">{{ category }}</div>
+          <div class="menu-grid">
+            {% for item in menu_items %}
+            <label class="menu-item">
+              <input type="radio" name="item_name" value="{{ item.name }}" required>
+              <div class="menu-item-body">
+                <span class="menu-name">{{ item.name }}</span>
+                <span class="menu-price">${{ "%.2f"|format(item.price) }}</span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="qty-row">
+          <label>Qty: <input type="number" name="qty" value="1" min="1" max="10" class="qty-input"></label>
+          <button type="submit" class="btn-primary">Add Item</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

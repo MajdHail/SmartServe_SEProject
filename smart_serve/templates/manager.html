@@ -1,0 +1,87 @@
+{% extends "base.html" %} {% block title %}– Dashboard{% endblock %} {% block
+content %}
+<div class="page-header">
+  <h2>Manager Dashboard</h2>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_orders }}</div>
+    <div class="stat-label">Total Orders</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-value">${{ "%.2f"|format(stats.revenue or 0) }}</div>
+    <div class="stat-label">Total Revenue</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-value">{{ stats.paid }}</div>
+    <div class="stat-label">Paid Orders</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-value">{{ stats.cancelled }}</div>
+    <div class="stat-label">Cancelled</div>
+  </div>
+</div>
+
+<div class="section-card">
+  <h3>Revenue — Last 14 Days</h3>
+  {% if daily %}
+  <div class="chart-wrap">
+    {% set max_rev = daily | map(attribute='revenue') | max %} {% for row in
+    daily | reverse %}
+    <div class="bar-row">
+      <div class="bar-label">{{ row.day }}</div>
+      <div class="bar-track">
+        <div
+          class="bar-fill"
+          style="width:{{ ((row.revenue / max_rev) * 100) | int }}%"
+        >
+          ${{ "%.0f"|format(row.revenue) }}
+        </div>
+      </div>
+      <div class="bar-count">{{ row.count }} orders</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">No paid orders yet.</p>
+  {% endif %}
+</div>
+
+<div class="section-card">
+  <h3>Staff Accounts</h3>
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td><span class="role-badge {{ u.role }}">{{ u.role }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top: 12px">
+    <a href="{{ url_for('manager_staff') }}" class="btn-primary small"
+      >Manage Staff</a
+    >
+    <a
+      href="{{ url_for('manager_menu') }}"
+      class="btn-primary small"
+      style="margin-left: 8px"
+      >Manage Menu</a
+    >
+    <a
+      href="{{ url_for('manager_orders') }}"
+      class="btn-primary small"
+      style="margin-left: 8px"
+      >View All Orders</a
+    >
+  </div>
+</div>
+{% endblock %}

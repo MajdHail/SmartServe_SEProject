@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}– Floor Plan{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Floor Plan</h2>
+  <p>Select a table to manage orders</p>
+</div>
+
+<div class="legend">
+  <span class="dot available"></span> Available
+  <span class="dot occupied"></span> Occupied
+  <span class="dot ready"></span> Ready to bill
+</div>
+
+<div class="floor-grid">
+  {% for table in tables %}
+  {% set elapsed = timers.get(table.id) %}
+  <div class="table-card {{ table.status }} {% if elapsed and elapsed >= 15 %}overdue{% endif %}">
+    <div class="table-num">Table {{ table.id }}</div>
+    <div class="table-status">{{ table.status | capitalize }}</div>
+    {% if table.note %}
+      <div class="table-note">📝 {{ table.note }}</div>
+    {% endif %}
+    {% if elapsed is not none %}
+      <div class="table-timer {% if elapsed >= 15 %}timer-red{% else %}timer-ok{% endif %}">
+        ⏱ {{ elapsed }}m in kitchen
+      </div>
+    {% endif %}
+    <div class="table-actions">
+      {% if table.status == 'available' %}
+        <a href="{{ url_for('manage_order', tid=table.id) }}" class="btn-primary small">New Order</a>
+      {% elif table.status == 'occupied' %}
+        <a href="{{ url_for('manage_order', tid=table.id) }}" class="btn-warning small">View Order</a>
+      {% elif table.status == 'ready' %}
+        <a href="{{ url_for('bill', tid=table.id) }}" class="btn-success small">Bill</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  setTimeout(() => location.reload(), 60000);
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %} {% block title %}– Kitchen{% endblock %} {% block
+content %}
+<div class="page-header">
+  <h2>Kitchen View</h2>
+  <p>Incoming orders from waiters</p>
+  <a href="{{ request.url }}" class="btn-back">Refresh</a>
+</div>
+
+{% if enriched %}
+<div class="kitchen-grid">
+  {% for row in enriched %} {% set o = row.order %} {% set elapsed = row.elapsed
+  %}
+  <div
+    class="kitchen-card {{ o.status }} {% if elapsed and elapsed >= 15 %}overdue{% endif %}"
+  >
+    <div class="kitchen-header">
+      <span class="table-label">Table {{ o.table_id }}</span>
+      <div style="display: flex; gap: 8px; align-items: center">
+        {% if elapsed is not none %}
+        <span
+          class="timer-badge {% if elapsed >= 15 %}timer-red{% else %}timer-ok{% endif %}"
+        >
+          ⏱ {{ elapsed }}m
+        </span>
+        {% endif %}
+        <span class="badge {{ o.status }}">{{ o.status | upper }}</span>
+      </div>
+    </div>
+    <div class="kitchen-waiter">Waiter: {{ o.waiter }}</div>
+    <div class="kitchen-time">{{ o.created_at }}</div>
+    <div class="kitchen-items">{{ o.items_str or 'No items' }}</div>
+    <div class="kitchen-total">Total: ${{ "%.2f"|format(o.total) }}</div>
+    <div class="kitchen-actions">
+      {% if o.status == 'sent' %}
+      <form
+        method="POST"
+        action="{{ url_for('update_order_status', oid=o.id) }}"
+      >
+        <input type="hidden" name="status" value="preparing" />
+        <button type="submit" class="btn-warning small">Start Preparing</button>
+      </form>
+      {% elif o.status == 'preparing' %}
+      <form
+        method="POST"
+        action="{{ url_for('update_order_status', oid=o.id) }}"
+      >
+        <input type="hidden" name="status" value="ready" />
+        <button type="submit" class="btn-success small">Mark Ready</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>No active orders in the kitchen.</p></div>
+{% endif %}
+
+<script>
+  setTimeout(() => location.reload(), 30000);
+</script>
+{% endblock %}
